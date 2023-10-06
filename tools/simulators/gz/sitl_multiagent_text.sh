@@ -86,7 +86,7 @@ sleep 1
 source ${src_path}/tools/simulators/gz/setup_gz.bash ${src_path} ${build_path}
 
 echo "Starting gazebo"
-gz sim -s -r ${src_path}/tools/simulators/gz/crazyflie_sitl_gz/worlds/${world}.sdf &
+gz sim -s -r ${src_path}/tools/simulators/gz/crazyflie_sitl_gz/worlds/${world}.sdf -v 3 &
 sleep 3
 
 n=0
