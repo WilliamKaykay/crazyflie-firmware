@@ -36,7 +36,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "config.h"
+#ifndef CONFIG_PLATFORM_SITL
 #include "autoconf.h"
+#endif
 /* ST includes */
 #include "stm32fxxx.h"
 
@@ -259,7 +261,6 @@ extern const MotorPerifDef* motorMapDefaltConBrushless[NBR_OF_MOTORS];
 extern const MotorPerifDef* motorMapBigQuadDeck[NBR_OF_MOTORS];
 extern const MotorPerifDef* motorMapBoltBrushless[NBR_OF_MOTORS];
 extern const MotorPerifDef* motorMapBolt11Brushless[NBR_OF_MOTORS];
-extern const MotorPerifDef* motorMapBolt11Brushed[NBR_OF_MOTORS];
 extern const MotorPerifDef* motorMapCF21Brushless[NBR_OF_MOTORS];
 
 /**

@@ -56,11 +56,7 @@ static platformConfig_t configs[] = {
     .deviceTypeName = "Crazyflie Bolt 1.1",
     .sensorImplementation = SensorImplementation_bmi088_spi_bmp388,
     .physicalLayoutAntennasAreClose = false,
-  #ifdef CONFIG_BOLT11_BRUSHED
-    .motorMap = motorMapBolt11Brushed,
-  #else
     .motorMap = motorMapBolt11Brushless,
-  #endif
   }
 #endif
 };

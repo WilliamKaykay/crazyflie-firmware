@@ -218,31 +218,30 @@ void controllerMellinger(controllerMellinger_t* self, control_t *control, const 
 
   // [eR]
   // Slow version
-  // struct mat33 Rdes = mcolumns(
-  //   mkvec(x_axis_desired.x, x_axis_desired.y, x_axis_desired.z),
-  //   mkvec(y_axis_desired.x, y_axis_desired.y, y_axis_desired.z),
-  //   mkvec(z_axis_desired.x, z_axis_desired.y, z_axis_desired.z));
+  struct mat33 Rdes = mcolumns(
+    mkvec(x_axis_desired.x, x_axis_desired.y, x_axis_desired.z),
+    mkvec(y_axis_desired.x, y_axis_desired.y, y_axis_desired.z),
+    mkvec(self->z_axis_desired.x, self->z_axis_desired.y, self->z_axis_desired.z));
 
-  // struct mat33 R_transpose = mtranspose(R);
-  // struct mat33 Rdes_transpose = mtranspose(Rdes);
+  struct mat33 R_transpose = mtranspose(R);
+  struct mat33 Rdes_transpose = mtranspose(Rdes);
 
-  // struct mat33 eRM = msub(mmult(Rdes_transpose, R), mmult(R_transpose, Rdes));
-
-  // eR.x = eRM.m[2][1];
-  // eR.y = -eRM.m[0][2];
-  // eR.z = eRM.m[1][0];
+  struct mat33 eRM = msub(mmul(Rdes_transpose, R), mmul(R_transpose, Rdes));
+  eR.x = eRM.m[2][1];
+  eR.y = -eRM.m[0][2];
+  eR.z = eRM.m[1][0];
 
   // Fast version (generated using Mathematica)
-  float x = q.x;
-  float y = q.y;
-  float z = q.z;
-  float w = q.w;
-  eR.x = (-1 + 2*fsqr(x) + 2*fsqr(y))*y_axis_desired.z + self->z_axis_desired.y - 2*(x*y_axis_desired.x*z + y*y_axis_desired.y*z - x*y*self->z_axis_desired.x + fsqr(x)*self->z_axis_desired.y + fsqr(z)*self->z_axis_desired.y - y*z*self->z_axis_desired.z) +    2*w*(-(y*y_axis_desired.x) - z*self->z_axis_desired.x + x*(y_axis_desired.y + self->z_axis_desired.z));
-  eR.y = x_axis_desired.z - self->z_axis_desired.x - 2*(fsqr(x)*x_axis_desired.z + y*(x_axis_desired.z*y - x_axis_desired.y*z) - (fsqr(y) + fsqr(z))*self->z_axis_desired.x + x*(-(x_axis_desired.x*z) + y*self->z_axis_desired.y + z*self->z_axis_desired.z) + w*(x*x_axis_desired.y + z*self->z_axis_desired.y - y*(x_axis_desired.x + self->z_axis_desired.z)));
-  eR.z = y_axis_desired.x - 2*(y*(x*x_axis_desired.x + y*y_axis_desired.x - x*y_axis_desired.y) + w*(x*x_axis_desired.z + y*y_axis_desired.z)) + 2*(-(x_axis_desired.z*y) + w*(x_axis_desired.x + y_axis_desired.y) + x*y_axis_desired.z)*z - 2*y_axis_desired.x*fsqr(z) + x_axis_desired.y*(-1 + 2*fsqr(x) + 2*fsqr(z));
+  // float x = q.x;
+  // float y = q.y;
+  // float z = q.z;
+  // float w = q.w;
+  // eR.x = (-1 + 2*fsqr(x) + 2*fsqr(y))*y_axis_desired.z + self->z_axis_desired.y - 2*(x*y_axis_desired.x*z + y*y_axis_desired.y*z - x*y*self->z_axis_desired.x + fsqr(x)*self->z_axis_desired.y + fsqr(z)*self->z_axis_desired.y - y*z*self->z_axis_desired.z) +    2*w*(-(y*y_axis_desired.x) - z*self->z_axis_desired.x + x*(y_axis_desired.y + self->z_axis_desired.z));
+  // eR.y = x_axis_desired.z - self->z_axis_desired.x - 2*(fsqr(x)*x_axis_desired.z + y*(x_axis_desired.z*y - x_axis_desired.y*z) - (fsqr(y) + fsqr(z))*self->z_axis_desired.x + x*(-(x_axis_desired.x*z) + y*self->z_axis_desired.y + z*self->z_axis_desired.z) + w*(x*x_axis_desired.y + z*self->z_axis_desired.y - y*(x_axis_desired.x + self->z_axis_desired.z)));
+  // eR.z = y_axis_desired.x - 2*(y*(x*x_axis_desired.x + y*y_axis_desired.x - x*y_axis_desired.y) + w*(x*x_axis_desired.z + y*y_axis_desired.z)) + 2*(-(x_axis_desired.z*y) + w*(x_axis_desired.x + y_axis_desired.y) + x*y_axis_desired.z)*z - 2*y_axis_desired.x*fsqr(z) + x_axis_desired.y*(-1 + 2*fsqr(x) + 2*fsqr(z));
 
   // Account for Crazyflie coordinate system
-  eR.y = -eR.y;
+  // eR.y = -eR.y;
 
   // [ew]
   float err_d_roll = 0;

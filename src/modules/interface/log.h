@@ -51,7 +51,11 @@ typedef uint16_t logVarId_t;
  * @param name Name of the variable
  * @return The variable ID or an invalid ID. Use logVarIdIsValid() to check validity.
  */
-logVarId_t logGetVarId(const char* group, const char* name);
+#ifdef ENABLE_VERIF
+  logVarId_t logGetVarId(const char* group, const char* name);
+#else
+  logVarId_t logGetVarId(char* group, char* name);
+#endif
 
 /** Check variable ID validity
  *
@@ -120,6 +124,12 @@ struct log_s {
   uint8_t type;
   char * name;
   void * address;
+    /*TODO: Need a better solution for this */
+  #if defined(ARCH_32) && defined(CONFIG_PLATFORM_SITL)
+    uint8_t useless[3];
+  #elif defined(ARCH_64) && defined(CONFIG_PLATFORM_SITL)
+    uint8_t useless[7];
+  #endif
 };
 
 /* Possible variable types */

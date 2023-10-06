@@ -53,7 +53,7 @@ static struct crtpLinkOperations nopLink = {
   .receivePacket     = (void*) nopFunc,
 };
 
-static struct crtpLinkOperations *link = &nopLink;
+static struct crtpLinkOperations *crtp_link = &nopLink;
 
 #define STATS_INTERVAL 500
 static struct {
@@ -146,12 +146,12 @@ void crtpTxTask(void *param)
 
   while (true)
   {
-    if (link != &nopLink)
+    if (crtp_link != &nopLink)
     {
       if (xQueueReceive(txQueue, &p, portMAX_DELAY) == pdTRUE)
       {
         // Keep testing, if the link changes to USB it will go though
-        while (link->sendPacket(&p) == false)
+        while (crtp_link->sendPacket(&p) == false)
         {
           // Relaxation time
           vTaskDelay(M2T(10));
@@ -173,9 +173,9 @@ void crtpRxTask(void *param)
 
   while (true)
   {
-    if (link != &nopLink)
+    if (crtp_link != &nopLink)
     {
-      if (!link->receivePacket(&p))
+      if (!crtp_link->receivePacket(&p))
       {
         if (queues[p.port])
         {
@@ -226,8 +226,8 @@ int crtpSendPacketBlock(CRTPPacket *p)
 int crtpReset(void)
 {
   xQueueReset(txQueue);
-  if (link->reset) {
-    link->reset();
+  if (crtp_link->reset) {
+    crtp_link->reset();
   }
 
   return 0;
@@ -235,22 +235,22 @@ int crtpReset(void)
 
 bool crtpIsConnected(void)
 {
-  if (link->isConnected)
-    return link->isConnected();
+  if (crtp_link->isConnected)
+    return crtp_link->isConnected();
   return true;
 }
 
 void crtpSetLink(struct crtpLinkOperations * lk)
 {
-  if(link)
-    link->setEnable(false);
+  if(crtp_link)
+    crtp_link->setEnable(false);
 
   if (lk)
-    link = lk;
+    crtp_link = lk;
   else
-    link = &nopLink;
+    crtp_link = &nopLink;
 
-  link->setEnable(true);
+  crtp_link->setEnable(true);
 }
 
 static int nopFunc(void)

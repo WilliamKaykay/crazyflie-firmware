@@ -1,0 +1,7 @@
+syntax = "proto3";
+package gz_std_msgs;
+
+// Holds a single 32-bit float
+message Float32 {
+  float data = 1;
+}

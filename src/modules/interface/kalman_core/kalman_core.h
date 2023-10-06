@@ -56,6 +56,7 @@
 #include "cf_math.h"
 #include "stabilizer_types.h"
 
+
 // Indexes to access the quad's state, stored as a column vector
 typedef enum
 {

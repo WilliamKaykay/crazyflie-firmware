@@ -148,7 +148,11 @@ static struct this_s this = {
   .pidZ = {
     .pid = {
       .kp = PID_POS_Z_KP,
+      #ifndef ENABLE_VERIF
       .ki = PID_POS_Z_KI,
+      #else
+      .ki = 0,
+      #endif
       .kd = PID_POS_Z_KD,
       .kff = PID_POS_Z_KFF,
     },
@@ -524,7 +528,7 @@ PARAM_GROUP_START(posCtlPid)
  */
 PARAM_ADD(PARAM_FLOAT | PARAM_PERSISTENT, xKp, &this.pidX.pid.kp)
 /**
- * @brief Integral gain for the position PID in the body-yaw-aligned X direction
+ * @brief Proportional gain for the position PID in the body-yaw-aligned X direction
  */
 PARAM_ADD(PARAM_FLOAT | PARAM_PERSISTENT, xKi, &this.pidX.pid.ki)
 /**

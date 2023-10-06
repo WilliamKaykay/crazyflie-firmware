@@ -46,7 +46,7 @@ static state_t lastState;
 const static int priorityDisable = COMMANDER_PRIORITY_DISABLE;
 
 static uint32_t lastUpdate;
-static bool enableHighLevel = false;
+static bool enableHighLevel = true;
 
 static QueueHandle_t setpointQueue;
 STATIC_MEM_QUEUE_ALLOC(setpointQueue, 1, sizeof(setpoint_t));
@@ -84,8 +84,9 @@ void commanderSetSetpoint(setpoint_t *setpoint, int priority)
     xQueueOverwrite(setpointQueue, setpoint);
     xQueueOverwrite(priorityQueue, &priority);
     if (priority > COMMANDER_PRIORITY_HIGHLEVEL) {
-      // Stop the high-level planner so it will forget its current state
-      crtpCommanderHighLevelStop();
+      // Disable the high-level planner so it will forget its current state and
+      // start over if we switch from low-level to high-level in the future.
+      crtpCommanderHighLevelDisable();
     }
   }
 }

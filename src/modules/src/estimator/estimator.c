@@ -1,4 +1,6 @@
+#ifndef CONFIG_PLATFORM_SITL
 #include "stm32fxxx.h"
+#endif
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "static_mem.h"
@@ -175,23 +177,26 @@ void estimatorEnqueue(const measurement_t *measurement) {
   }
 
   portBASE_TYPE result;
-  bool isInInterrupt = (SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) != 0;
-  if (isInInterrupt) {
-    portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
-    result = xQueueSendFromISR(measurementsQueue, measurement, &xHigherPriorityTaskWoken);
-    if (xHigherPriorityTaskWoken == pdTRUE) {
-      portYIELD();
-    }
-  } else {
-    result = xQueueSend(measurementsQueue, measurement, 0);
-  }
+  // TODO: Uncomment this out
+  // #ifndef CONFIG_PLATFORM_SITL
+  // bool isInInterrupt = (SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) != 0;
+  // if (isInInterrupt) {
+  //   portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
+  //   result = xQueueSendFromISR(measurementsQueue, measurement, &xHigherPriorityTaskWoken);
+  //   if (xHigherPriorityTaskWoken == pdTRUE) {
+  //     portYIELD();
+  //   }
+  // } else {
+  //   result = xQueueSend(measurementsQueue, measurement, 0);
+  // }
+  result = xQueueSend(measurementsQueue, measurement, 0);
 
   if (result == pdTRUE) {
     STATS_CNT_RATE_EVENT(&measurementAppendedCounter);
   } else {
     STATS_CNT_RATE_EVENT(&measurementNotAppendedCounter);
   }
-
+  // #endif
   // events
   switch (measurement->type) {
     case MeasurementTypeTDOA:

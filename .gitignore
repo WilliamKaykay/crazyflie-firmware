@@ -39,6 +39,7 @@ docs/api/log_param_doc.json
 docs/api
 
 build/
+sitl_make/*
 # To avoid that /tools/build is ignored
 !/tools/*
 

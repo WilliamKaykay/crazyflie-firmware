@@ -1,0 +1,13 @@
+syntax = "proto3";
+package gz_geometry_msgs;
+
+import "Header.proto";
+import "gz/msgs/vector3d.proto";
+
+// Extends the Gazebo gz.msgs.Vector3d message type to
+// include a header.
+message Vector3dStamped
+{
+  gz_std_msgs.Header header = 1;
+  gz.msgs.Vector3d position = 2;
+}

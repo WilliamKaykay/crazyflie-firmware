@@ -99,6 +99,23 @@
 
 // #define KALMAN_USE_BARO_UPDATE
 
+// #ifdef CONFIG_PLATFORM_SITL
+
+// #include <string.h>
+
+// #define PI                            3.1415926f
+// #define arm_matrix_instance_f32       Matrixf
+// #define arm_sqrt(x)                   sqrtf(x)
+// #define arm_sqrt_f32(x)               sqrtf(x)
+// #define arm_cos_f32(x)                cosf(x)
+// #define arm_sin_f32(x)                sinf(x)
+
+// typedef struct{
+//   uint16_t numRows;
+//   uint16_t numCols;
+//   float *pData;
+// } Matrixf;     
+// #endif
 
 // Semaphore to signal that we got data from the stabilizer loop to process
 static SemaphoreHandle_t runTaskSemaphore;
@@ -112,9 +129,8 @@ static StaticSemaphore_t dataMutexBuffer;
 /**
  * Tuning parameters
  */
-#define PREDICT_RATE RATE_100_HZ // this is slower than the IMU update rate of 1000Hz
+#define PREDICT_RATE RATE_100_HZ // this is slower than the IMU update rate of 500Hz
 const uint32_t PREDICTION_UPDATE_INTERVAL_MS = 1000 / PREDICT_RATE;
-
 // The bounds on the covariance, these shouldn't be hit, but sometimes are... why?
 #define MAX_COVARIANCE (100)
 #define MIN_COVARIANCE (1e-6f)
@@ -224,13 +240,14 @@ static void kalmanTask(void* parameters) {
     }
 
     bool quadIsFlying = supervisorIsFlying();
-
+    // quadIsFlying = false;
   #ifdef KALMAN_DECOUPLE_XY
     kalmanCoreDecoupleXY(&coreData);
   #endif
 
     // Run the system dynamics to predict the state forward.
-    if (nowMs >= nextPredictionMs) {
+    // if (nowMs >= nextPredictionMs) {
+    if (accSubSampler.count > 0 && gyroSubSampler.count > 0) {
       axis3fSubSamplerFinalize(&accSubSampler);
       axis3fSubSamplerFinalize(&gyroSubSampler);
 
@@ -300,7 +317,9 @@ static void updateQueuedMeasurements(const uint32_t nowMs, const bool quadIsFlyi
       case MeasurementTypeTDOA:
         if(robustTdoa){
           // robust KF update with TDOA measurements
+          #ifndef CONFIG_PLATFORM_SITL
           kalmanCoreRobustUpdateWithTdoa(&coreData, &m.data.tdoa, &outlierFilterTdoaState);
+          #endif
         }else{
           // standard KF update
           kalmanCoreUpdateWithTdoa(&coreData, &m.data.tdoa, nowMs, &outlierFilterTdoaState);
@@ -314,8 +333,10 @@ static void updateQueuedMeasurements(const uint32_t nowMs, const bool quadIsFlyi
         break;
       case MeasurementTypeDistance:
         if(robustTwr){
+            #ifndef CONFIG_PLATFORM_SITL
             // robust KF update with UWB TWR measurements
             kalmanCoreRobustUpdateWithDistance(&coreData, &m.data.distance);
+            #endif
         }else{
             // standard KF update
             kalmanCoreUpdateWithDistance(&coreData, &m.data.distance);

@@ -29,8 +29,10 @@
 #include <stdint.h>
 #include "FreeRTOS.h"
 #include "cfassert.h"
+#ifndef CONFIG_PLATFORM_SITL
 #include "led.h"
 #include "motors.h"
+#endif
 #include "debug.h"
 
 #define MAGIC_ASSERT_INDICATOR 0x2f8a001f
@@ -76,6 +78,14 @@ SNAPSHOT_DATA snapshot __attribute__((section(".nzds"))) = {
 
 static enum snapshotType_e currentType = SnapshotTypeNone;
 
+void storeAssertFileData(const char *file, int line)
+{
+  snapshot.magicNumber = MAGIC_ASSERT_INDICATOR;
+  snapshot.type = SnapshotTypeFile;
+  currentType = snapshot.type;
+  snapshot.file.fileName = file;
+  snapshot.file.line = line;
+}
 
 void assertFail(char *exp, char *file, int line)
 {
@@ -83,6 +93,7 @@ void assertFail(char *exp, char *file, int line)
   storeAssertFileData(file, line);
   DEBUG_PRINT("Assert failed %s:%d\n", file, line);
 
+  #ifndef CONFIG_PLATFORM_SITL
   motorsStop();
   ledShowFaultPattern();
 
@@ -91,15 +102,7 @@ void assertFail(char *exp, char *file, int line)
     // Only reset if debugger is not connected
     NVIC_SystemReset();
   }
-}
-
-void storeAssertFileData(const char *file, int line)
-{
-  snapshot.magicNumber = MAGIC_ASSERT_INDICATOR;
-  snapshot.type = SnapshotTypeFile;
-  currentType = snapshot.type;
-  snapshot.file.fileName = file;
-  snapshot.file.line = line;
+  #endif
 }
 
 void storeAssertHardfaultData(

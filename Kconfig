@@ -83,16 +83,11 @@ config PLATFORM_FLAPPER
     select SENSORS_BMI088_BMP388
     select SENSORS_BMI088_SPI
 
-endchoice
+config PLATFORM_SITL
+    bool "Build for SITL"
+    select SENSORS_SITL
 
-config BOLT11_BRUSHED
-    bool "Bolt 1.1: Use brushed motor driver (HW mod required)"
-    depends on PLATFORM_BOLT
-    default n
-    help
-        0R resistors 0402 (or simple wire to short) should be mounted at 
-        R19, R22, R33, R34 and motor override signals will be disabled (high impedance).
-        Brushed motor should be connected + and - at motor connector (not S).
+endchoice
 
 endmenu
 
@@ -139,6 +134,12 @@ config SENSORS_BMI088_BMP388
 config SENSORS_BOSCH
     bool "Include Bosch sensors"
     default n
+
+config SENSORS_SITL
+bool "Support for SITL sensors"
+default n
+help
+    Include support for SITL sensors
 
 config SENSORS_IGNORE_BAROMETER_FAIL
     bool "Ignore failure from barometer"
@@ -198,7 +199,7 @@ config DECK_FORCE
     default "none"
     help
         A colon seperated list of custom drivers to force load or "none".
-
+        
 source src/deck/drivers/src/Kconfig
 
 endmenu

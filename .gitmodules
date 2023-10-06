@@ -13,3 +13,6 @@
 [submodule "vendor/unity"]
 	path = vendor/unity
 	url = https://github.com/throwtheswitch/unity.git
+[submodule "tools/simulators/gz/crazyflie_sitl_gz/external/crazyflie_comm"]
+	path = tools/simulators/gz/crazyflie_sitl_gz/external/crazyflie_comm
+	url = https://github.com/wuwushrek/crazyflie_cpp.git

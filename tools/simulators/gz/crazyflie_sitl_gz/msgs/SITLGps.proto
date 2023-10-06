@@ -1,0 +1,16 @@
+syntax = "proto3";
+package gz_gps_msgs;
+
+message SITLGps
+{
+  double time                  = 1;
+  double latitude_deg          = 2;
+  double longitude_deg         = 3;
+  double altitude              = 4;
+  double eph                   = 5;
+  double epv                   = 6;
+  double velocity              = 7;
+  double velocity_east         = 8;
+  double velocity_north        = 9;
+  double velocity_up           = 10;
+}

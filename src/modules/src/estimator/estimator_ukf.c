@@ -54,7 +54,7 @@
 #include "estimator.h"
 #include "kalman_supervisor.h"
 
-#include "stm32f4xx.h"
+// #include "stm32f4xx.h"
 
 #include "FreeRTOS.h"
 #include "queue.h"

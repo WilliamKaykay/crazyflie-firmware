@@ -41,23 +41,51 @@
 
 #ifndef CONFIG_H_
 #define CONFIG_H_
-#include "nrf24l01.h"
 
-#include "trace.h"
+#ifndef CONFIG_PLATFORM_SITL
+  #include "nrf24l01.h"
+  #include "trace.h"
+#endif
+
+
 #include "usec_time.h"
 
-#define CONFIG_BLOCK_ADDRESS    (2048 * (64-1))
-#define MCU_ID_ADDRESS          0x1FFF7A10
-#define MCU_FLASH_SIZE_ADDRESS  0x1FFF7A22
-#ifndef FREERTOS_HEAP_SIZE
-  #define FREERTOS_HEAP_SIZE      30000
-#endif
-#define FREERTOS_MIN_STACK_SIZE 150       // M4-FPU register setup is bigger so stack needs to be bigger
-#define FREERTOS_MCU_CLOCK_HZ   168000000
+#ifndef CONFIG_PLATFORM_SITL
+  #define CONFIG_BLOCK_ADDRESS    (2048 * (64-1))
+  #define MCU_ID_ADDRESS          0x1FFF7A10
+  #define MCU_FLASH_SIZE_ADDRESS  0x1FFF7A22
+  #ifndef FREERTOS_HEAP_SIZE
+    #define FREERTOS_HEAP_SIZE      30000
+  #endif
+  #define FREERTOS_MIN_STACK_SIZE 150       // M4-FPU register setup is bigger so stack needs to be bigger
+  #define FREERTOS_MCU_CLOCK_HZ   168000000
 
-#define configGENERATE_RUN_TIME_STATS 1
-#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() usecTimerInit()
-#define portGET_RUN_TIME_COUNTER_VALUE() usecTimestamp()
+  #define configGENERATE_RUN_TIME_STATS 1
+  #define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() usecTimerInit()
+  #define portGET_RUN_TIME_COUNTER_VALUE() usecTimestamp()
+#else
+  // Simulation configuration
+  #define P_NAME "Crazyflie 2.0"
+  #define QUAD_FORMATION_X
+
+  #define CONFIG_BLOCK_ADDRESS      (2048 * (64-1))
+  #define MCU_ID_ADDRESS          0x1FFF7A10
+  #define MCU_FLASH_SIZE_ADDRESS  0x1FFF7A22
+  #define FREERTOS_HEAP_SIZE        40000
+  #define FREERTOS_MIN_STACK_SIZE   150
+  #define FREERTOS_MCU_CLOCK_HZ     168000000
+
+  /* Run time stats gathering configuration options. */
+  unsigned long ulGetRunTimeCounterValue( void ); /* Prototype of function that returns run time counter. */  
+  #define configGENERATE_RUN_TIME_STATS 1
+
+  // // extern void vPortFindTicksPerSecond( void );
+  // #define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() vPortFindTicksPerSecond()
+
+  // // extern unsigned long ulPortGetTimerValue( void );
+  // #define portGET_RUN_TIME_COUNTER_VALUE() ulPortGetTimerValue()
+#endif
+
 
 
 // Task priorities. Higher number higher priority
@@ -100,6 +128,8 @@
 #define UART2_TASK_PRI          3
 #define CRTP_SRV_TASK_PRI       0
 #define PLATFORM_SRV_TASK_PRI   0
+
+#define VERIF_TASK_PRI          1
 
 // Not compiled
 #if 0
@@ -158,7 +188,7 @@
 #define CPX_TASK_NAME           "CPX"
 #define APP_TASK_NAME           "APP"
 #define FLAPPERDECK_TASK_NAME   "FLAPPERDECK"
-
+#define VERIF_TASK_NAME         "VERIF"
 
 //Task stack sizes
 #define SYSTEM_TASK_STACKSIZE         (2* configMINIMAL_STACK_SIZE)
@@ -193,7 +223,7 @@
 #define UART2_TASK_STACKSIZE          configMINIMAL_STACK_SIZE
 #define CRTP_SRV_TASK_STACKSIZE       configMINIMAL_STACK_SIZE
 #define PLATFORM_SRV_TASK_STACKSIZE   configMINIMAL_STACK_SIZE
-#define PASSTHROUGH_TASK_STACKSIZE    (2 * configMINIMAL_STACK_SIZE)
+#define PASSTHROUGH_TASK_STACKSIZE    configMINIMAL_STACK_SIZE
 #define BQ_OSD_TASK_STACKSIZE         configMINIMAL_STACK_SIZE
 #define GTGPS_DECK_TASK_STACKSIZE     configMINIMAL_STACK_SIZE
 #define UART1_TEST_TASK_STACKSIZE     configMINIMAL_STACK_SIZE
@@ -204,6 +234,7 @@
 #define KALMAN_TASK_STACKSIZE         (3 * configMINIMAL_STACK_SIZE)
 #define FLAPPERDECK_TASK_STACKSIZE    (2 * configMINIMAL_STACK_SIZE)
 #define ERROR_UKF_TASK_STACKSIZE      (4 * configMINIMAL_STACK_SIZE)
+#define VERIF_TASK_STACKSIZE          (100 * configMINIMAL_STACK_SIZE)   
 
 //The radio channel. From 0 to 125
 #define RADIO_CHANNEL 80
@@ -246,7 +277,7 @@
 //#define ADC_OUTPUT_RAW_DATA
 //#define UART_OUTPUT_TRACE_DATA
 //#define UART_OUTPUT_RAW_DATA_ONLY
-//#define IMU_OUTPUT_RAW_DATA_ON_UART
+//#define IMU_OUTPUT_RAW_DATA_ON#define VERIF_TASK_PRI          1_UART
 //#define T_LAUCH_MOTORS
 //#define T_LAUCH_MOTOR_TEST
 //#define MOTOR_RAMPUP_TEST

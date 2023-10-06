@@ -38,13 +38,17 @@
 #include "stabilizer.h"
 #include "configblock.h"
 #include "worker.h"
+#ifndef CONFIG_PLATFORM_SITL
 #include "autoconf.h"
+#endif
 
 #ifdef CONFIG_DECK_LIGHTHOUSE
 #include "lighthouse_storage.h"
 #endif
 
+#ifndef CONFIG_PLATFORM_SITL
 #include "locodeck.h"
+#endif
 
 #include "estimator.h"
 #include "quatcompress.h"
@@ -110,9 +114,11 @@ static positionMeasurement_t ext_pos;
 // Struct for logging pose information
 static poseMeasurement_t ext_pose;
 
+#ifndef CONFIG_PLATFORM_SITL
 static CRTPPacket pkRange;
 static uint8_t rangeIndex;
 static bool enableRangeStreamFloat = false;
+#endif
 
 #ifdef CONFIG_DECK_LIGHTHOUSE
 static CRTPPacket LhAngle;
@@ -224,6 +230,7 @@ static void extPosePackedHandler(const CRTPPacket* pk) {
   }
 }
 
+#ifndef CONFIG_PLATFORM_SITL
 static void lpsShortLppPacketHandler(CRTPPacket* pk) {
   if (pk->size >= 2) {
 #ifdef CONFIG_DECK_LOCO
@@ -240,6 +247,7 @@ static void lpsShortLppPacketHandler(CRTPPacket* pk) {
     crtpSendPacket(pk);
   }
 }
+#endif
 
 typedef union {
   struct {
@@ -292,9 +300,11 @@ static void genericLocHandle(CRTPPacket* pk)
   if (pk->size < 1) return;
 
   switch (type) {
+#ifndef CONFIG_PLATFORM_SITL
     case LPS_SHORT_LPP_PACKET:
       lpsShortLppPacketHandler(pk);
       break;
+#endif
     case EMERGENCY_STOP:
       isEmergencyStopRequested = true;
       break;
@@ -337,6 +347,7 @@ static void extPositionPackedHandler(CRTPPacket* pk)
   }
 }
 
+#ifndef CONFIG_PLATFORM_SITL
 void locSrvSendRangeFloat(uint8_t id, float range)
 {
   rangePacket *rp = (rangePacket *)pkRange.data;
@@ -361,6 +372,7 @@ void locSrvSendRangeFloat(uint8_t id, float range)
     }
   }
 }
+#endif
 
 #ifdef CONFIG_DECK_LIGHTHOUSE
 void locSrvSendLighthouseAngle(int baseStation, pulseProcessorResult_t* angles)
@@ -455,6 +467,7 @@ LOG_GROUP_START(locSrvZ)
   LOG_ADD_CORE(LOG_UINT16, tick, &tickOfLastPacket)  // time when data was received last (ms/ticks)
 LOG_GROUP_STOP(locSrvZ)
 
+#ifndef CONFIG_PLATFORM_SITL
 /**
  * Service parameters for (external) positioning data stream through ctrp
  */
@@ -476,3 +489,4 @@ PARAM_GROUP_START(locSrv)
  */
   PARAM_ADD_CORE(PARAM_FLOAT, extQuatStdDev, &extQuatStdDev)
 PARAM_GROUP_STOP(locSrv)
+#endif

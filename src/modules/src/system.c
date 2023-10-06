@@ -71,7 +71,9 @@
 #include "peer_localization.h"
 #include "cfassert.h"
 #include "i2cdev.h"
+#ifndef CONFIG_PLATFORM_SITL
 #include "autoconf.h"
+#endif
 #include "vcp_esc_passthrough.h"
 #if CONFIG_ENABLE_CPX
   #include "cpxlink.h"

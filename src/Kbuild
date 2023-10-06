@@ -1,5 +1,5 @@
-obj-y += deck/
-obj-y += drivers/
+obj-${CONFIG_PLATFORM_CF2} += deck/
+obj-${CONFIG_PLATFORM_CF2} += drivers/
 obj-y += hal/
 obj-y += init/
 obj-y += lib/

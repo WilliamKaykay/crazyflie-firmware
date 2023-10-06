@@ -73,9 +73,10 @@ bool memTest(void) {
     return false;
   }
 
-  if (owMemHandler == 0) {
-    return false;
-  }
+  // Removed since owMemHandler is set in deckInit(), and we are not using a deck.
+  // if (owMemHandler == 0) {
+  //   return false;
+  // }
 
   return true;
 }

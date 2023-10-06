@@ -29,11 +29,13 @@
 #include "config.h"
 #include "FreeRTOS.h"
 #include "param_logic.h"
-#include "storage.h"
 #include "crc32.h"
 #include "debug.h"
 #include "cfassert.h"
+#ifndef CONFIG_PLATFORM_SITL
 #include "autoconf.h"
+#include "storage.h"
+#endif
 
 #if 0
 #define PARAM_DEBUG(fmt, ...) DEBUG_PRINT("D/param " fmt, ## __VA_ARGS__)
@@ -672,6 +674,34 @@ void paramGetExtendedType(CRTPPacket *p)
   crtpSendPacketBlock(p);
 }
 
+#ifndef CONFIG_PLATFORM_SITL
+void paramGetDefaultValue(CRTPPacket *p)
+{
+  uint16_t id;
+
+  memcpy(&id, &p->data[1], sizeof(id));
+  int index = variableGetIndex(id);
+
+  const bool doesParamExist = (index >= 0);
+  // Read-only parameters have no default value
+  if (!doesParamExist || params[index].type & PARAM_RONLY) {
+    p->data[3] = ENOENT;
+    p->size = 4;
+    crtpSendPacketBlock(p);
+    return;
+  }
+
+  // Add default value
+  uint8_t paramLen = paramGetLen(index);
+  if (params[index].getter) {
+    memcpy(&p->data[3], params[index].getter(), paramLen);
+  } else {
+    memcpy(&p->data[3], paramGetDefault(index), paramLen);
+  }
+  p->size = 3 + paramLen;
+  crtpSendPacketBlock(p);
+}
+
 static void generateStorageKey(const uint16_t index, char key[KEY_LEN])
 {
   char *group;
@@ -713,34 +743,6 @@ void paramPersistentStore(CRTPPacket *p)
   p->size = 4;
   crtpSendPacketBlock(p);
 }
-
-void paramGetDefaultValue(CRTPPacket *p)
-{
-  uint16_t id;
-
-  memcpy(&id, &p->data[1], sizeof(id));
-  int index = variableGetIndex(id);
-
-  const bool doesParamExist = (index >= 0);
-  // Read-only parameters have no default value
-  if (!doesParamExist || params[index].type & PARAM_RONLY) {
-    p->data[3] = ENOENT;
-    p->size = 4;
-    crtpSendPacketBlock(p);
-    return;
-  }
-
-  // Add default value
-  uint8_t paramLen = paramGetLen(index);
-  if (params[index].getter) {
-    memcpy(&p->data[3], params[index].getter(), paramLen);
-  } else {
-    memcpy(&p->data[3], paramGetDefault(index), paramLen);
-  }
-  p->size = 3 + paramLen;
-  crtpSendPacketBlock(p);
-}
-
 void paramPersistentGetState(CRTPPacket *p)
 {
   uint16_t id;
@@ -813,6 +815,7 @@ void paramPersistentClear(CRTPPacket *p)
   crtpSendPacketBlock(p);
 }
 
+
 static bool persistentParamFromStorage(const char *key, void *buffer, size_t length)
 {
   //
@@ -832,3 +835,5 @@ void paramLogicStorageInit()
 {
   storageForeach(PERSISTENT_PREFIX_STRING, persistentParamFromStorage);
 }
+
+#endif

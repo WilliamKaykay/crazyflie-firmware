@@ -137,11 +137,12 @@ void paramSetFloat(paramVarId_t varid, float valuef);
  */
 void paramLogicInit();
 
+#ifndef CONFIG_PLATFORM_SITL
 /**
  * @brief Read parameter values from persistent storage
  */
 void paramLogicStorageInit();
-
+#endif
 // The following functions SHALL NOT be called outside paramTask!
 void paramWriteProcess(CRTPPacket *p);
 void paramReadProcess(CRTPPacket *p);
@@ -150,6 +151,8 @@ void paramTOCProcess(CRTPPacket *p, int command);
 void paramGetDefaultValue(CRTPPacket *p);
 void paramSetByName(CRTPPacket *p);
 void paramGetExtendedType(CRTPPacket *p);
+#ifndef CONFIG_PLATFORM_SITL
 void paramPersistentStore(CRTPPacket *p);
 void paramPersistentGetState(CRTPPacket *p);
 void paramPersistentClear(CRTPPacket *p);
+#endif

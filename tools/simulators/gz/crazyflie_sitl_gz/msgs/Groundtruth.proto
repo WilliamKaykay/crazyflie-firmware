@@ -1,0 +1,17 @@
+syntax = "proto3";
+package gz_gps_msgs;
+
+message Groundtruth
+{
+  double time                  = 1;
+  double latitude_rad          = 2;
+  double longitude_rad         = 3;
+  double altitude              = 4;
+  double velocity_east         = 5;
+  double velocity_north        = 6;
+  double velocity_up           = 7;
+  double attitude_q_w          = 8;
+  double attitude_q_x          = 9;
+  double attitude_q_y          = 10;
+  double attitude_q_z          = 11;
+}

@@ -1,10 +1,39 @@
 {
-    "search.exclude": {
-        "**/generated": true,
-        "**/node_modules": true,
-        "**/bower_components": true
-    },
+    "cmake.includePath": "${workspaceFolder}/src",
+    "cmake.buildDirectory": "${workspaceFolder}/sitl_make/build",
+    "cmake.sourceDirectory": "${workspaceFolder}/sitl_make",
     "files.associations": {
-        "bootloader.h": "c"
+        "crtp.h": "c",
+        "socketlink.h": "c",
+        "config.h": "c",
+        "stdlib.h": "c",
+        "queuemonitor.h": "c",
+        "stdbool.h": "c",
+        "kalman_supervisor.h": "c",
+        "kalman_core.h": "c",
+        "*.tcc": "c",
+        "complex": "c",
+        "bitset": "c",
+        "string": "c",
+        "vector": "c",
+        "exception": "c",
+        "fstream": "c",
+        "limits": "c",
+        "sstream": "c",
+        "functional": "c",
+        "utility": "c",
+        "eventtrigger.h": "c",
+        "stabilizer_types.h": "c",
+        "math.h": "c",
+        "power_distribution.h": "c",
+        "controller_pid.h": "c",
+        "list": "c",
+        "ratio": "c",
+        "crtp_commander.h": "c",
+        "commander.h": "c",
+        "math3d.h": "c",
+        "pulse_processor.h": "c",
+        "mem.h": "c",
+        "stop_token": "c"
     }
 }

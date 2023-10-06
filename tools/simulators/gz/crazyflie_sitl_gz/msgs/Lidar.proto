@@ -1,0 +1,10 @@
+syntax = "proto3";
+package lidar_msgs.msgs;
+
+message lidar
+{
+  float time_msec       	= 1;
+  float min_distance      	= 2;
+  float max_distance  	 	= 3;
+  float current_distance   = 4;
+}

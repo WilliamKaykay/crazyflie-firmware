@@ -1,2 +1,4 @@
-obj-y += main.o
-obj-y += startup_stm32f40xx.o
+obj-$(CONFIG_PLATFORM_CF2) += main.o
+obj-$(CONFIG_PLATFORM_SITL) += main_sitl.o
+
+obj-$(CONFIG_PLATFORM_CF2) += startup_stm32f40xx.o

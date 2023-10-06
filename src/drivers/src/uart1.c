@@ -48,9 +48,8 @@
  */
 //#define ENABLE_UART1_DMA
 
-#define QUEUE_LENGTH 64
 static xQueueHandle uart1queue;
-STATIC_MEM_QUEUE_ALLOC(uart1queue, QUEUE_LENGTH, sizeof(uint8_t));
+STATIC_MEM_QUEUE_ALLOC(uart1queue, 64, sizeof(uint8_t));
 
 static bool isInit = false;
 static bool hasOverrun = false;
@@ -262,16 +261,6 @@ int uart1Putchar(int ch)
 void uart1Getchar(char * ch)
 {
   xQueueReceive(uart1queue, ch, portMAX_DELAY);
-}
-
-uint32_t uart1bytesAvailable()
-{
-  return uxQueueMessagesWaiting(uart1queue);
-}
-
-uint32_t uart1QueueMaxLength()
-{
-  return QUEUE_LENGTH;
 }
 
 bool uart1DidOverrun()

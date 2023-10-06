@@ -20,10 +20,6 @@
 #include "controller_mellinger.h"
 #include "controller_brescianini.h"
 #include "power_distribution.h"
-#include "axis3fSubSampler.h"
-#include "outlierFilterTdoa.h"
-#include "kalman_core.h"
-#include "mm_tdoa.h"
 %}
 
 %include "math3d.h"
@@ -36,11 +32,6 @@
 %include "controller_mellinger.h"
 %include "controller_brescianini.h"
 %include "power_distribution.h"
-%include "axis3fSubSampler.h"
-%include "outlierFilterTdoa.h"
-%include "kalman_core.h"
-%include "mm_tdoa.h"
-
 
 %inline %{
 struct poly4d* piecewise_get(struct piecewise_traj *pp, int i)

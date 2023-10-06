@@ -47,10 +47,8 @@ void powerDistribution(const control_t *control, motors_thrust_uncapped_t* motor
  *
  * @param motorThrustBatCompUncapped The desired thrust for the motors
  * @param motorPwm The capped thrust
- * @return true   Thrust was capped
- * @return false  Thrust was unchanged and not capped
  */
-bool powerDistributionCap(const motors_thrust_uncapped_t* motorThrustBatCompUncapped, motors_thrust_pwm_t* motorPwm);
+void powerDistributionCap(const motors_thrust_uncapped_t* motorThrustBatCompUncapped, motors_thrust_pwm_t* motorPwm);
 
 /**
  * Returns a 1 when motor 'id' gives thrust, returns 0 otherwise
@@ -68,5 +66,12 @@ uint16_t powerDistributionStopRatio(uint32_t id);
  * @return uint32_t The idle thrust
  */
 uint32_t powerDistributionGetIdleThrust();
+
+#ifdef CONFIG_PLATFORM_SITL
+#define NBR_OF_MOTORS 4
+void motorsSetRatio(const motors_thrust_pwm_t* motorPwm);
+
+uint16_t getMotorRatio(int id);
+#endif
 
 #endif //__POWER_DISTRIBUTION_H__

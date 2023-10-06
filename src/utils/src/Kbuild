@@ -1,6 +1,7 @@
 obj-y += cfassert.o
 obj-y += clockCorrectionEngine.o
 obj-y += configblockeeprom.o
+obj-$(CONFIG_PLATFORM_SITL) += configblocksitl.c
 obj-y += cpuid.o
 obj-y += crc32.o
 obj-y += debug.o

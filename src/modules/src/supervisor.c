@@ -34,14 +34,18 @@
 
 #include "log.h"
 #include "param.h"
+#ifndef CONFIG_PLATFORM_SITL
 #include "motors.h"
+#endif
 #include "power_distribution.h"
 #include "supervisor.h"
 #include "supervisor_state_machine.h"
 #include "platform_defaults.h"
 #include "crtp_localization_service.h"
 #include "system.h"
+#ifndef CONFIG_PLATFORM_SITL
 #include "autoconf.h"
+#endif
 
 #define DEBUG_MODULE "SUP"
 #include "debug.h"
@@ -111,10 +115,6 @@ bool supervisorIsArmed() {
   return supervisorMem.isArmingActivated || supervisorMem.deprecatedArmParam;
 }
 
-bool supervisorIsLocked() {
-  return supervisorStateLocked == supervisorMem.state;
-}
-
 bool supervisorRequestArming(const bool doArm) {
   if (doArm == supervisorMem.isArmingActivated) {
     return true;
@@ -128,12 +128,13 @@ bool supervisorRequestArming(const bool doArm) {
   return true;
 }
 
-//
+//`
 // We say we are flying if one or more motors are running over the idle thrust.
 //
 static bool isFlyingCheck(SupervisorMem_t* this, const uint32_t tick) {
   bool isThrustOverIdle = false;
   const uint32_t idleThrust = powerDistributionGetIdleThrust();
+  #ifndef CONFIG_PLATFORM_SITL
   for (int i = 0; i < NBR_OF_MOTORS; ++i) {
     const uint32_t ratio = powerDistributionMotorType(i) * motorsGetRatio(i);
     if (ratio > idleThrust) {
@@ -141,7 +142,15 @@ static bool isFlyingCheck(SupervisorMem_t* this, const uint32_t tick) {
       break;
     }
   }
-
+  #else
+  for (int i = 0; i < NBR_OF_MOTORS; ++i) {
+    uint16_t ratio = getMotorRatio(i);
+    if (ratio > idleThrust) {
+      isThrustOverIdle = true;
+      break;
+    }
+  }
+  #endif
   if (isThrustOverIdle) {
     this->latestThrustTick = tick;
   }
@@ -309,9 +318,6 @@ static void updateLogData(SupervisorMem_t* this, const supervisorConditionBits_t
   if (this->isTumbled) {
     this->infoBitfield |= 0x0020;
   }
-  if (supervisorStateLocked == this->state) {
-    this->infoBitfield |= 0x0040;
-  }
 }
 
 void supervisorUpdate(const sensorData_t *sensors, const setpoint_t* setpoint, stabilizerStep_t stabilizerStep) {
@@ -376,7 +382,7 @@ bool supervisorAreMotorsAllowedToRun() {
 void infoDump(const SupervisorMem_t* this) {
   DEBUG_PRINT("Supervisor info ---\n");
   DEBUG_PRINT("State: %s\n", supervisorGetStateName(this->state));
-  DEBUG_PRINT("Conditions: (0x%lx)\n", this->latestConditions);
+  DEBUG_PRINT("Conditions: (0x%x)\n", this->latestConditions);
   for (supervisorConditions_t condition = 0; condition < supervisorCondition_NrOfConditions; condition++) {
     const supervisorConditionBits_t bit = 1 << condition;
     int bitValue = 0;
@@ -384,7 +390,7 @@ void infoDump(const SupervisorMem_t* this) {
       bitValue = 1;
     }
 
-    DEBUG_PRINT("  %s (0x%lx): %u\n", supervisorGetConditionName(condition), bit, bitValue);
+    DEBUG_PRINT("  %s (0x%x): %u\n", supervisorGetConditionName(condition), bit, bitValue);
   }
 }
 
@@ -447,7 +453,6 @@ LOG_GROUP_START(supervisor)
  * Bit 3 = can fly - the Crazyflie is ready to fly
  * Bit 4 = is flying - the Crazyflie is flying.
  * Bit 5 = is tumbled - the Crazyflie is up side down.
- * Bit 6 = is locked - the Crazyflie is in the locked state and must be restarted.
  */
 LOG_ADD(LOG_UINT16, info, &supervisorMem.infoBitfield)
 LOG_GROUP_STOP(supervisor)

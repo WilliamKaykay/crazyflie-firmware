@@ -45,13 +45,21 @@
 // Default PID gains
 #define PID_ROLL_RATE_KP  250.0
 #define PID_ROLL_RATE_KI  500.0
+#ifndef ENABLE_VERIF
 #define PID_ROLL_RATE_KD  2.5
+#else
+#define PID_ROLL_RATE_KD  0.0
+#endif
 #define PID_ROLL_RATE_KFF 0.0
 #define PID_ROLL_RATE_INTEGRATION_LIMIT    33.3
 
 #define PID_PITCH_RATE_KP  250.0
 #define PID_PITCH_RATE_KI  500.0
+#ifndef ENABLE_VERIF
 #define PID_PITCH_RATE_KD  2.5
+#else
+#define PID_PITCH_RATE_KD  0.0
+#endif
 #define PID_PITCH_RATE_KFF 0.0
 #define PID_PITCH_RATE_INTEGRATION_LIMIT   33.3
 

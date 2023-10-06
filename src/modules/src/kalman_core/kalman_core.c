@@ -57,13 +57,15 @@
 
 #include "kalman_core.h"
 #include "cfassert.h"
+#ifndef CONFIG_PLATFORM_SITL
 #include "autoconf.h"
+#endif
 
 #include "physicalConstants.h"
 
 #include "math3d.h"
 #include "static_mem.h"
-
+#include "debug.h"
 // #define DEBUG_STATE_CHECK
 
 // the reversion of pitch and roll to zero
@@ -572,7 +574,8 @@ static void predictDt(kalmanCoreData_t* this, Axis3f *acc, Axis3f *gyro, float d
 }
 
 void kalmanCorePredict(kalmanCoreData_t* this, Axis3f *acc, Axis3f *gyro, const uint32_t nowMs, bool quadIsFlying) {
-  float dt = (nowMs - this->lastPredictionMs) / 1000.0f;
+  // float dt = (nowMs - this->lastPredictionMs) / 1000.0f;
+  float dt = 2.0f / 1000.0f;
   predictDt(this, acc, gyro, dt, quadIsFlying);
   this->lastPredictionMs = nowMs;
 }
@@ -747,6 +750,7 @@ void kalmanCoreExternalizeState(const kalmanCoreData_t* this, state_t *state, co
       .y = this->S[KC_STATE_Y],
       .z = this->S[KC_STATE_Z]
   };
+  // DEBUG_PRINT("x: %f, y: %f, z: %f \n",  (double)state->position.x,  (double)state->position.y, (double)state->position.z);
 
   // velocity is in body frame and needs to be rotated to world frame
   state->velocity = (velocity_t){
@@ -755,6 +759,7 @@ void kalmanCoreExternalizeState(const kalmanCoreData_t* this, state_t *state, co
       .z = this->R[2][0]*this->S[KC_STATE_PX] + this->R[2][1]*this->S[KC_STATE_PY] + this->R[2][2]*this->S[KC_STATE_PZ]
   };
 
+  // DEBUG_PRINT("vx: %f, vy: %f, vz: %f \n",  (double)state->velocity.x,  (double)state->velocity.y, (double)state->velocity.z);
   // Accelerometer measurements are in the body frame and need to be rotated to world frame.
   // Furthermore, the legacy code requires acc.z to be acceleration without gravity.
   // Finally, note that these accelerations are in Gs, and not in m/s^2, hence - 1 for removing gravity
@@ -768,6 +773,7 @@ void kalmanCoreExternalizeState(const kalmanCoreData_t* this, state_t *state, co
   float yaw = atan2f(2*(this->q[1]*this->q[2]+this->q[0]*this->q[3]) , this->q[0]*this->q[0] + this->q[1]*this->q[1] - this->q[2]*this->q[2] - this->q[3]*this->q[3]);
   float pitch = asinf(-2*(this->q[1]*this->q[3] - this->q[0]*this->q[2]));
   float roll = atan2f(2*(this->q[2]*this->q[3]+this->q[0]*this->q[1]) , this->q[0]*this->q[0] - this->q[1]*this->q[1] - this->q[2]*this->q[2] + this->q[3]*this->q[3]);
+  // DEBUG_PRINT("roll: %f, pitch: %f, yaw: %f \n",  (double)roll,  (double)pitch, (double)yaw);
 
   // Save attitude, adjusted for the legacy CF2 body coordinate system
   state->attitude = (attitude_t){

@@ -1,0 +1,4 @@
+models/crazyflie/crazyflie.sdf
+models/crazyflie/crazyflie.sdf
+build/*
+.vscode/*
