@@ -30,6 +30,11 @@ find_package (Threads REQUIRED)
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
 
+# Gazebo
+find_package(gz-transport NAMES gz-transport12)
+set(GZ_TRANSPORT_VER ${gz-transport_VERSION_MAJOR})
+set(GZ_TRANSPORT_LIB gz-transport${GZ_TRANSPORT_VER}::core)
+
 set (CF2_SITL_ROOT_DIR
   ${CMAKE_CURRENT_SOURCE_DIR}/../
 )
@@ -85,6 +90,9 @@ set(FREERTOS_SRCS
 )
 
 set (CF2_SITL_INCLUDE_DIRS
+  ${GZ-SIM_INCLUDE_DIRS}
+  ${GZ-MSGS_INCLUDE_DIRS}
+  ${GZ-TRANSPORT_INCLUDE_DIRS}
   ${FREERTOS_SRC_DIR}/include
   ${FREERTOS_SRC_DIR}/portable/ThirdParty/GCC/Posix
   ${FREERTOS_SRC_DIR}/portable/ThirdParty/GCC/Posix/utils
@@ -102,6 +110,7 @@ set (CF2_SITL_INCLUDE_DIRS
   ${CF2_SITL_SRCS_DIR}/modules/interface/estimator
   ${CF2_SITL_SRCS_DIR}/modules/interface/kalman_core
   ${CF2_SITL_SRCS_DIR}/modules/interface/outlierfilter
+  ${CF2_SITL_SRCS_DIR}/modules/interface/simulation
 
   #Verification
   ${INCL_VERIF}
@@ -131,6 +140,7 @@ set(SRCS
 
   #sensors
   ${CF2_SITL_SRCS_DIR}/hal/src/sensors_sitl.c
+  # ${CF2_SITL_SRCS_DIR}/hal/src/sensors_gz.c
   ${CF2_SITL_SRCS_DIR}/hal/src/sensors.c
 
   #Modules
@@ -170,6 +180,7 @@ set(SRCS
   ${CF2_SITL_SRCS_DIR}/modules/src/estimator/estimator.c
   ${CF2_SITL_SRCS_DIR}/modules/src/estimator/estimator_complementary.c
   ${CF2_SITL_SRCS_DIR}/modules/src/estimator/estimator_kalman.c
+  ${CF2_SITL_SRCS_DIR}/modules/src/estimator/estimator_ukf.c
   ${CF2_SITL_SRCS_DIR}/modules/src/kalman_core/kalman_core.c
   ${CF2_SITL_SRCS_DIR}/modules/src/kalman_core/mm_absolute_height.c
   ${CF2_SITL_SRCS_DIR}/modules/src/kalman_core/mm_distance_robust.c
@@ -183,12 +194,12 @@ set(SRCS
   ${CF2_SITL_SRCS_DIR}/modules/src/kalman_core/mm_tof.c
   ${CF2_SITL_SRCS_DIR}/modules/src/kalman_core/mm_yaw_error.c
   ${CF2_SITL_SRCS_DIR}/modules/src/kalman_supervisor.c
-
-  ${CF2_SITL_SRCS_DIR}/modules/src/estimator/estimator_ukf.c
+  #outlier filter
   ${CF2_SITL_SRCS_DIR}/modules/src/outlierfilter/outlierFilterTdoa.c
   ${CF2_SITL_SRCS_DIR}/modules/src/outlierfilter/outlierFilterTdoaSteps.c
   ${CF2_SITL_SRCS_DIR}/modules/src/outlierfilter/outlierFilterLighthouse.c
-
+  # simulation
+  ${CF2_SITL_SRCS_DIR}/modules/src/simulation/cf_gz_bridge.cpp
   #Controller and power distribution
   ${CF2_SITL_SRCS_DIR}/modules/src/controller/attitude_pid_controller.c
   ${CF2_SITL_SRCS_DIR}/modules/src/controller/position_controller_pid.c
@@ -232,7 +243,7 @@ set(SRCS
 # Create an executable
 add_executable(cf2 ${SRCS})
 
-target_link_libraries(cf2 ${CMAKE_THREAD_LIBS_INIT} m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+target_link_libraries(cf2 ${CMAKE_THREAD_LIBS_INIT} m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${GZ_TRANSPORT_LIB})
 
 target_compile_options(cf2 PUBLIC -DCONFIG_DECK_FORCE -DCONFIG_ESTIMATOR_KALMAN -DCONFIG_ESTIMATOR_KALMAN_ENABLE -DCONFIG_ESTIMATOR_UKF_ENABLE -DCRAZYFLIE_FW -DCONFIG_PLATFORM_SITL -DARCH_64)
 target_compile_definitions(cf2 PUBLIC CONFIG_PLATFORM_SITL)
