@@ -71,7 +71,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DESTIMATOR=StateEstimatorType${ESTIMATOR} -
 
 #set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} --specs=nano.specs -T ${CF2_SITL_SRCS_DIR}/../tools/make/F405/linker/FLASH.ld")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-deprecated-declarations")
-set(CMAKE_BUILD_TYPE Release)
+# set(CMAKE_BUILD_TYPE Debug)
 
 set(${PROJECT_NAME}_INCLUDE_DIRS
     ${PROJECT_SOURCE_DIR}/include
@@ -110,7 +110,7 @@ set (CF2_SITL_INCLUDE_DIRS
   ${CF2_SITL_SRCS_DIR}/modules/interface/estimator
   ${CF2_SITL_SRCS_DIR}/modules/interface/kalman_core
   ${CF2_SITL_SRCS_DIR}/modules/interface/outlierfilter
-  ${CF2_SITL_SRCS_DIR}/modules/interface/simulation
+  ${CF2_SITL_SRCS_DIR}/simulation/interface
 
   #Verification
   ${INCL_VERIF}
@@ -139,8 +139,8 @@ set(SRCS
   ${CF2_SITL_SRCS_DIR}/modules/src/crtp.c
 
   #sensors
-  ${CF2_SITL_SRCS_DIR}/hal/src/sensors_sitl.c
-  # ${CF2_SITL_SRCS_DIR}/hal/src/sensors_gz.c
+  #${CF2_SITL_SRCS_DIR}/hal/src/sensors_sitl.c
+  ${CF2_SITL_SRCS_DIR}/hal/src/sensors_gz.c
   ${CF2_SITL_SRCS_DIR}/hal/src/sensors.c
 
   #Modules
@@ -199,7 +199,8 @@ set(SRCS
   ${CF2_SITL_SRCS_DIR}/modules/src/outlierfilter/outlierFilterTdoaSteps.c
   ${CF2_SITL_SRCS_DIR}/modules/src/outlierfilter/outlierFilterLighthouse.c
   # simulation
-  ${CF2_SITL_SRCS_DIR}/modules/src/simulation/cf_gz_bridge.cpp
+  ${CF2_SITL_SRCS_DIR}/simulation/src/cf_gz_bridge.cpp
+  ${CF2_SITL_SRCS_DIR}/simulation/src/cpu_utilization_task.c
   #Controller and power distribution
   ${CF2_SITL_SRCS_DIR}/modules/src/controller/attitude_pid_controller.c
   ${CF2_SITL_SRCS_DIR}/modules/src/controller/position_controller_pid.c
@@ -251,4 +252,4 @@ set_target_properties(
   cf2 PROPERTIES LINK_FLAGS "-Wl,--gc-sections,-T${CMAKE_CURRENT_SOURCE_DIR}/log_param_linker.ld"
 )
 
-include(cmake/sitl_gazebo.cmake)
+# include(cmake/sitl_gazebo.cmake)

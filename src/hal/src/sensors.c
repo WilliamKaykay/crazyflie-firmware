@@ -52,7 +52,7 @@
 #endif
 
 #ifdef CONFIG_SENSORS_SITL
-  #include "sensors_sitl.h"
+  #include "sensors_gz.h"
 #endif
 
 typedef struct {
@@ -159,7 +159,7 @@ static const sensorsImplementation_t sensorImplementations[SensorImplementation_
     .readMag = sensorsSimReadMag,
     .readBaro = sensorsSimReadBaro,
     .setAccMode = sensorsSimSetAccMode,
-    .dataAvailableCallback = nullFunction,
+    .dataAvailableCallback = sensorsSimDataAvailableCallback,
   },
 #endif
 };
@@ -244,6 +244,12 @@ void sensorsResume()
 void __attribute__((used)) EXTI14_Callback(void) {
   activeImplementation->dataAvailableCallback();
 }
+
+#ifdef CONFIG_SENSORS_SITL
+void __attribute__((used)) gz_DataCallback(void) {
+  activeImplementation->dataAvailableCallback();
+}
+#endif
 
 static const sensorsImplementation_t* findImplementation(SensorImplementation_t implementation) {
   const sensorsImplementation_t* result = 0;

@@ -296,8 +296,10 @@ static void stabilizerTask(void* param)
   rateSupervisorInit(&rateSupervisorContext, xTaskGetTickCount(), M2T(1000), 997, 1003, 1);
 
   while(1) {
+    // DEBUG_PRINT("Stabilizer loop\n");
     // The sensor should unlock at 1kHz
     sensorsWaitDataReady();
+    // DEBUG_PRINT("Sensors ready\n");
 
     // update sensorData struct (for logging variables)
     sensorsAcquire(&sensorData);
@@ -312,11 +314,8 @@ static void stabilizerTask(void* param)
 
       stateEstimator(&state, stabilizerStep);
       
-      #ifndef CONFIG_PLATFORM_SITL
       const bool areMotorsAllowedToRun = supervisorAreMotorsAllowedToRun();
-      #else
-      const bool areMotorsAllowedToRun = true;
-      #endif
+      
       // Critical for safety, be careful if you modify this code!
       crtpCommanderBlock(! areMotorsAllowedToRun);
 

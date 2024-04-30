@@ -55,6 +55,8 @@ void commInit(void)
   #ifndef CONFIG_PLATFORM_SITL
   uartslkInit();
   radiolinkInit();
+  #else
+  socketlinkInit();
   #endif
 
   /* These functions are moved to be initialized early so

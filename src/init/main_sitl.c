@@ -39,40 +39,15 @@
 #include <stdbool.h>
 
 /* Project includes */
-#include "socketlink.h"
 #include "config.h"
 #include "platform.h"
 #include "system.h"
 #include "usec_time.h"
 
 
-#define CRTP_PORT 19950
-char CRTP_SERVER_ADDRESS[] = "INADDR_ANY";
-
-/* Store the UDP port to communicate with CF */
-uint16_t crtp_port;
-/* Store an IP address or INADDR_ANY for the server (CF) */
-char* address_host;
-// /* Store the cf instance unique Identifiant */
-// uint8_t cf_id;
-
 int main(int argc, char **argv) 
 {
-
-  if (argc == 3){
-    crtp_port = atoi(argv[1]);
-    address_host = argv[2];
-    printf("address : %s , port : %d \n" , address_host , crtp_port );
-  } else if (argc == 2) {
-    // Initiaze socket parameters
-    crtp_port =  atoi(argv[1]);
-    address_host = CRTP_SERVER_ADDRESS;
-    printf("address : %s , port : %d \n" , address_host , crtp_port );
-  }else {
-    crtp_port =  CRTP_PORT;
-    address_host = CRTP_SERVER_ADDRESS;
-    printf("No port and ADDRESS selected ! 19950-INADDR_ANY selected as default\n");
-  }
+  parse_arguments(argc, argv);
 
   //Initialize the platform.
   int err = platformInit();
@@ -92,6 +67,7 @@ int main(int argc, char **argv)
 
   return 0;
 }
+
 
 /*
 * FreeRTOS assert name
@@ -117,3 +93,4 @@ void vApplicationMallocFailedHook(void)
 {
     while(1);
 }
+

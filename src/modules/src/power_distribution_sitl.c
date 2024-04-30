@@ -21,7 +21,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
- * power_distribution_quadrotor.c - Crazyflie stock power distribution code
+ * power_distribution_sitl.c - Crazyflie simulator power distribution code
  */
 
 #include "FreeRTOS.h"
@@ -211,11 +211,11 @@ void motorsSetRatio(const motors_thrust_pwm_t* motorPwm)
   motorPower.m3 = motorPwm->motors.m3;
   motorPower.m4 = motorPwm->motors.m4;
 
-  if (xTaskGetTickCount() - lastSentTime >= M2T(1)){
-    memcpy(p.data , (uint8_t *) &motorPower , p.size);
-    crtpSendPacket(&p);
-    lastSentTime = xTaskGetTickCount();
-  }
+  // if (xTaskGetTickCount() - lastSentTime >= M2T(1)){
+  //   memcpy(p.data , (uint8_t *) &motorPower , p.size);
+  //   crtpSendPacket(&p);
+  //   lastSentTime = xTaskGetTickCount();
+  // }
   // DEBUG_PRINT("%d , %d , %d , %d  \n", (int) motorPower.m1 , (int) motorPower.m2 , (int) motorPower.m3 , (int) motorPower.m4 );
 }
 /**

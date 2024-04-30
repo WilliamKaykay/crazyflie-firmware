@@ -19,7 +19,8 @@
 #include "task.h"
 #include "semphr.h"
 
-#include "sensors_sitl.h"
+#include "sensors_gz.h"
+#include "cf_gz_bridge.h"
 
 #include "system.h"
 #include "debug.h"
@@ -37,8 +38,7 @@
 #include "filter.h"
 #include "param.h"
 #include "log.h"
-
-#include "crtp.h"
+#include "static_mem.h"
 
 #include <math.h>
 
@@ -81,10 +81,20 @@ typedef struct
 } BiasObj;
 
 static xQueueHandle accelerometerDataQueue;
+STATIC_MEM_QUEUE_ALLOC(accelerometerDataQueue, 1, sizeof(Axis3f));
 static xQueueHandle gyroDataQueue;
+STATIC_MEM_QUEUE_ALLOC(gyroDataQueue, 1, sizeof(Axis3f));
 static xQueueHandle magnetometerDataQueue;
+STATIC_MEM_QUEUE_ALLOC(magnetometerDataQueue, 1, sizeof(Axis3f));
 static xQueueHandle barometerDataQueue;
+STATIC_MEM_QUEUE_ALLOC(barometerDataQueue, 1, sizeof(baro_t));
+
+static xSemaphoreHandle sensorsDataReady;
+static StaticSemaphore_t sensorsDataReadyBuffer;
 static xSemaphoreHandle dataReady;
+static StaticSemaphore_t dataReadyBuffer;
+static xSemaphoreHandle poseDataReady;
+static StaticSemaphore_t poseDataReadyBuffer;
 
 static bool isInit = false;
 static sensorData_t sensors;
@@ -118,9 +128,9 @@ float sinPitch;
 float cosRoll;
 float sinRoll;
 
-static void processAccGyroMeasurements(const uint8_t *buffer);
-static void processMagnetometerMeasurements(const uint8_t *buffer);
-static void processBarometerMeasurements(const uint8_t *buffer);
+static void processAccGyroMeasurements(const Axis3i16 *accData, const Axis3i16 *gyroData);
+//static void processMagnetometerMeasurements(const uint8_t *buffer);
+//static void processBarometerMeasurements(const uint8_t *buffer);
 
 #ifdef GYRO_GYRO_BIAS_LIGHT_WEIGHT
 static bool processGyroBiasNoBuffer(int16_t gx, int16_t gy, int16_t gz, Axis3f *gyroBiasOut);
@@ -134,6 +144,9 @@ static void sensorsCalculateVarianceAndMean(BiasObj* bias, Axis3f* varOut, Axis3
 static void sensorsAddBiasValue(BiasObj* bias, int16_t x, int16_t y, int16_t z);
 static bool sensorsFindBiasValue(BiasObj* bias);
 static void sensorsAccAlignToGravity(Axis3f* in, Axis3f* out);
+
+STATIC_MEM_TASK_ALLOC(sensorsTask, SENSORS_TASK_STACKSIZE);
+STATIC_MEM_TASK_ALLOC(poseTask, SENSORS_TASK_STACKSIZE);
 
 // static void sensorsDeviceInit(void);
 // static void sensorsTaskInit(void);
@@ -171,93 +184,133 @@ void sensorsSimAcquire(sensorData_t *sensors)
 bool sensorsSimAreCalibrated() {
   return gyroBiasFound;
 }
-
 static void sensorsTask(void *param)
 {
   measurement_t measurement;
+  Axis3i16 accel_raw;
+  Axis3i16 gyro_raw;
+
   DEBUG_PRINT("Entering sensorsTask() \n");
   systemWaitStart();
-  
-  CRTPPacket p;
-  crtpInitTaskQueue(CRTP_PORT_SETPOINT_SIM);
-  bool lastGyroBiasFound = false;
 
   while (1)
   {
-    // Wait for a new sensor message to arrive
-    crtpReceivePacketBlock(CRTP_PORT_SETPOINT_SIM, &p);
-    switch (p.data[0])
+    if (pdTRUE == xSemaphoreTake(sensorsDataReady, portMAX_DELAY)) 
     {
-      case SENSOR_GYRO_ACC_SIM:
-        processAccGyroMeasurements(&(p.data[1]));
-        measurement.type = MeasurementTypeAcceleration;
-        measurement.data.acceleration.acc = sensors.acc;
-        estimatorEnqueue(&measurement);
-        measurement.type = MeasurementTypeGyroscope;
-        measurement.data.gyroscope.gyro = sensors.gyro;
-        estimatorEnqueue(&measurement);
-        xQueueOverwrite(accelerometerDataQueue, &sensors.acc);
-        xQueueOverwrite(gyroDataQueue, &sensors.gyro);
-        break;
-      case SENSOR_MAG_SIM:
-        processMagnetometerMeasurements(&(p.data[1]));
-        xQueueOverwrite(magnetometerDataQueue, &sensors.mag);
-        break;
-      case SENSOR_BARO_SIM:
-        processBarometerMeasurements(&(p.data[1]));
-        // measurement.type = MeasurementTypeBarometer;
-        // measurement.data.barometer.baro = sensors.baro;
-        // estimatorEnqueue(&measurement);
-        xQueueOverwrite(barometerDataQueue, &sensors.baro);
-        break;
-      default :
-        break;
+      // DEBUG_PRINT("IMU data ready \n");
+      acquireImuData(&accel_raw, &gyro_raw);
+      processAccGyroMeasurements(&accel_raw, &gyro_raw);
+      measurement.type = MeasurementTypeAcceleration;
+      measurement.data.acceleration.acc = sensors.acc;
+      estimatorEnqueue(&measurement);
+      measurement.type = MeasurementTypeGyroscope;
+      measurement.data.gyroscope.gyro = sensors.gyro;
+      estimatorEnqueue(&measurement);
+      xQueueOverwrite(accelerometerDataQueue, &sensors.acc);
+      xQueueOverwrite(gyroDataQueue, &sensors.gyro);
+      xSemaphoreGive(dataReady);
+      // DEBUG_PRINT("Gave dataReady \n");
     }
-
-    // Answer while gyro bias not found
-    if (!lastGyroBiasFound && gyroBiasFound){
-      p.data[0] = gyroBiasFound;
-      p.size = 1;
-      lastGyroBiasFound =  gyroBiasFound;
-      crtpSendPacket(&p);
-    }
-    xSemaphoreGive(dataReady);
   }
 }
+
+static void poseTask(void *param)
+{
+  poseMeasurement_t pose;
+  DEBUG_PRINT("Entering poseTask() \n");
+  systemWaitStart();
+
+  while (1)
+  {
+    if (pdTRUE == xSemaphoreTake(poseDataReady, portMAX_DELAY)) 
+    {
+      // DEBUG_PRINT("Pose data ready \n");
+      acquirePoseData(&pose);
+      estimatorEnqueuePose(&pose);
+      // DEBUG_PRINT("Gave dataReady \n");
+    }
+  }
+}
+// static void sensorsTask(void *param)
+// {
+//   measurement_t measurement;
+//   DEBUG_PRINT("Entering sensorsTask() \n");
+//   systemWaitStart();
+  
+//   CRTPPacket p;
+//   crtpInitTaskQueue(CRTP_PORT_SETPOINT_SIM);
+//   bool lastGyroBiasFound = false;
+
+//   while (1)
+//   {
+//     // Wait for a new sensor message to arrive
+//     crtpReceivePacketBlock(CRTP_PORT_SETPOINT_SIM, &p);
+//     switch (p.data[0])
+//     {
+//       case SENSOR_GYRO_ACC_SIM:
+//         processAccGyroMeasurements(&(p.data[1]));
+//         measurement.type = MeasurementTypeAcceleration;
+//         measurement.data.acceleration.acc = sensors.acc;
+//         estimatorEnqueue(&measurement);
+//         measurement.type = MeasurementTypeGyroscope;
+//         measurement.data.gyroscope.gyro = sensors.gyro;
+//         estimatorEnqueue(&measurement);
+//         xQueueOverwrite(accelerometerDataQueue, &sensors.acc);
+//         xQueueOverwrite(gyroDataQueue, &sensors.gyro);
+//         break;
+//       case SENSOR_MAG_SIM:
+//         processMagnetometerMeasurements(&(p.data[1]));
+//         xQueueOverwrite(magnetometerDataQueue, &sensors.mag);
+//         break;
+//       case SENSOR_BARO_SIM:
+//         processBarometerMeasurements(&(p.data[1]));
+//         // measurement.type = MeasurementTypeBarometer;
+//         // measurement.data.barometer.baro = sensors.baro;
+//         // estimatorEnqueue(&measurement);
+//         xQueueOverwrite(barometerDataQueue, &sensors.baro);
+//         break;
+//       default :
+//         break;
+//     }
+
+//     // Answer while gyro bias not found
+//     if (!lastGyroBiasFound && gyroBiasFound){
+//       p.data[0] = gyroBiasFound;
+//       p.size = 1;
+//       lastGyroBiasFound =  gyroBiasFound;
+//       crtpSendPacket(&p);
+//     }
+//     xSemaphoreGive(dataReady);
+//   }
+// }
 
 void sensorsSimWaitDataReady(void)
 {
   xSemaphoreTake(dataReady, portMAX_DELAY);
 }
 
-void processBarometerMeasurements(const uint8_t *buffer)
-{
-  const baro_t *baroData = (baro_t *) buffer;
+// void processBarometerMeasurements(const uint8_t *buffer)
+// {
+//   const baro_t *baroData = (baro_t *) buffer;
 
-  sensors.baro.pressure = baroData->pressure;
-  sensors.baro.temperature = baroData->temperature;
-  sensors.baro.asl = baroData->asl;
-}
+//   sensors.baro.pressure = baroData->pressure;
+//   sensors.baro.temperature = baroData->temperature;
+//   sensors.baro.asl = baroData->asl;
+// }
 
-void processMagnetometerMeasurements(const uint8_t *buffer)
-{
-  // (real value in G / SENSORS_G_PER_LSB_CFG)
-  const Axis3i16 *magData = (Axis3i16 *) buffer;
+// void processMagnetometerMeasurements(const uint8_t *buffer)
+// {
+//   // (real value in G / SENSORS_G_PER_LSB_CFG)
+//   const Axis3i16 *magData = (Axis3i16 *) buffer;
 
-  sensors.mag.x = (float)magData->x / MAG_GAUSS_PER_LSB;
-  sensors.mag.y = (float)magData->y / MAG_GAUSS_PER_LSB;
-  sensors.mag.z = (float)magData->z / MAG_GAUSS_PER_LSB;
-}
+//   sensors.mag.x = (float)magData->x / MAG_GAUSS_PER_LSB;
+//   sensors.mag.y = (float)magData->y / MAG_GAUSS_PER_LSB;
+//   sensors.mag.z = (float)magData->z / MAG_GAUSS_PER_LSB;
+// }
 
-void processAccGyroMeasurements(const uint8_t *buffer)
+void processAccGyroMeasurements(const Axis3i16 *accData, const Axis3i16 *gyroData)
 {
   Axis3f accScaled;
-
-  // (real value in G / SENSORS_G_PER_LSB_CFG) from gazebo SIM
-  const Axis3i16 *accData = (Axis3i16 *) buffer;
-  //(real value in deg / SENSORS_DEG_PER_LSB_CFG) from gazebo SIM
-  const Axis3i16 *gyroData = (Axis3i16 *) (buffer + sizeof(Axis3i16));
-
 
 #ifdef GYRO_BIAS_LIGHT_WEIGHT
   gyroBiasFound = processGyroBiasNoBuffer(gyroData->x, gyroData->y, gyroData->z, &gyroBias);
@@ -304,17 +357,22 @@ static void sensorsDeviceInit(void)
 
 static void sensorsTaskInit(void)
 {
-  // Use to have access to the sensors data
-  dataReady = xSemaphoreCreateBinary();
+  accelerometerDataQueue = STATIC_MEM_QUEUE_CREATE(accelerometerDataQueue);
+  gyroDataQueue = STATIC_MEM_QUEUE_CREATE(gyroDataQueue);
+  magnetometerDataQueue = STATIC_MEM_QUEUE_CREATE(magnetometerDataQueue);
+  barometerDataQueue = STATIC_MEM_QUEUE_CREATE(barometerDataQueue);
 
-  accelerometerDataQueue = xQueueCreate(1, sizeof(Axis3f));
-  gyroDataQueue = xQueueCreate(1, sizeof(Axis3f));
-  magnetometerDataQueue = xQueueCreate(1, sizeof(Axis3f));
-  barometerDataQueue = xQueueCreate(1, sizeof(baro_t));
-
-  xTaskCreate(sensorsTask, SENSORS_TASK_NAME, SENSORS_TASK_STACKSIZE, NULL, SENSORS_TASK_PRI, NULL);
+  STATIC_MEM_TASK_CREATE(sensorsTask, sensorsTask, SENSORS_TASK_NAME, NULL, SENSORS_TASK_PRI);
+  STATIC_MEM_TASK_CREATE(poseTask, poseTask, "POSE", NULL, SENSORS_TASK_PRI);
 }
 
+static void sensorsInterruptInit(void)
+{
+  // Use to have access to the sensors data
+  sensorsDataReady = xSemaphoreCreateBinaryStatic(&sensorsDataReadyBuffer);
+  dataReady = xSemaphoreCreateBinaryStatic(&dataReadyBuffer);
+  poseDataReady = xSemaphoreCreateBinaryStatic(&poseDataReadyBuffer);
+}
 
 void sensorsSimInit(void)
 {
@@ -325,6 +383,8 @@ void sensorsSimInit(void)
 
   sensorsBiasObjInit(&gyroBiasRunning);
   sensorsDeviceInit();
+  sensorsInterruptInit();
+  cfGzBridgeInit();
   sensorsTaskInit();
 
   isInit = true;
@@ -611,6 +671,16 @@ static void applyAxis3fLpf(lpf2pData *data, Axis3f* in)
   for (uint8_t i = 0; i < 3; i++) {
     in->axis[i] = lpf2pApply(&data[i], in->axis[i]);
   }
+}
+
+void sensorsSimDataAvailableCallback(void)
+{
+  xSemaphoreGive(sensorsDataReady);
+}
+
+void poseDataAvailableCallback(void)
+{
+  xSemaphoreGive(poseDataReady);
 }
 
 #ifdef GYRO_ADD_RAW_AND_VARIANCE_LOG_VALUES

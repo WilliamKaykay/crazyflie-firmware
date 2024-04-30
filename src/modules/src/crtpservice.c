@@ -36,6 +36,8 @@
 #include "static_mem.h"
 #include "param.h"
 
+#define DEBUG_MODULE "CRTPSRV"
+#include "debug.h"
 
 typedef enum {
   linkEcho   = 0x00,
@@ -74,7 +76,7 @@ static void crtpSrvTask(void* prm)
 
   while(1) {
     crtpReceivePacketBlock(CRTP_PORT_LINK, &p);
-
+    DEBUG_PRINT("Received packet on link port %d\n", p.channel);
     switch (p.channel)
     {
       case linkEcho:

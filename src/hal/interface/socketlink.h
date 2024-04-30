@@ -30,13 +30,15 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+
 #include "crtp.h"
+
 
 /* Store the UDP port to communicate with CF */
 extern uint16_t crtp_port;
 /* Store an IP address or INADDR_ANY for the server (CF) */
-extern char* address_host;
-// /* Store the cf instance unique Identifiant */
+extern const char* remote_address;
+// // /* Store the cf instance unique Identifiant */
 // extern uint8_t cf_id;
 
 /* Initialize the socket link */

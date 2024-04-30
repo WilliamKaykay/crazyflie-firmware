@@ -236,6 +236,7 @@ static void kalmanTask(void* parameters) {
       axis3fSubSamplerFinalize(&gyroSubSampler);
 
       kalmanCorePredict(&coreData, &accSubSampler.subSample, &gyroSubSampler.subSample, nowMs, quadIsFlying);
+      // DEBUG_PRINT("Prediction: coreData.S[KC_STATE_X]: %f, coreData.S[KC_STATE_Y]: %f, coreData.S[KC_STATE_Z]: %f\n", coreData.S[KC_STATE_X], coreData.S[KC_STATE_Y], coreData.S[KC_STATE_Z]);
       nextPredictionMs = nowMs + PREDICTION_UPDATE_INTERVAL_MS;
 
       STATS_CNT_RATE_EVENT(&predictionCounter);

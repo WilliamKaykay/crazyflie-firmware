@@ -80,6 +80,9 @@
 #if CONFIG_ENABLE_CPX
   #include "cpxlink.h"
 #endif
+#include "cpu_utilization_task.h"
+#include "cf_gz_bridge.h"
+#include "socketlink.h"
 
 /* Private variable */
 static bool selftestPassed;
@@ -113,9 +116,9 @@ void systemInit(void)
 
   canStartMutex = xSemaphoreCreateMutexStatic(&canStartMutexBuffer);
   xSemaphoreTake(canStartMutex, portMAX_DELAY);
-
+  init_cpu_utilization_task();
   #ifdef CONFIG_PLATFORM_SITL
-  socketlinkInit();
+  // socketlinkInit();
   #else
   usblinkInit();
   #endif

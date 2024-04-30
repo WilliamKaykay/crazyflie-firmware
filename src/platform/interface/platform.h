@@ -99,4 +99,8 @@ bool platformConfigPhysicalLayoutAntennasAreClose();
 const MotorPerifDef** platformConfigGetMotorMapping();
 #endif
 
+#ifdef CONFIG_PLATFORM_SITL
+void parse_arguments(int argc, char *argv[]);
+#endif
+
 #endif /* PLATFORM_H_ */
