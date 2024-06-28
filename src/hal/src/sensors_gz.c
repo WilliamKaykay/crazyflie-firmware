@@ -14,6 +14,8 @@
  * This is based on the work made in sensors_cf2.c 
  */
 
+#define DEBUG_MODULE "SENSORS_GZ"
+
 /* FreeRTOS includes */
 #include "FreeRTOS.h"
 #include "task.h"
@@ -145,8 +147,8 @@ static void sensorsAddBiasValue(BiasObj* bias, int16_t x, int16_t y, int16_t z);
 static bool sensorsFindBiasValue(BiasObj* bias);
 static void sensorsAccAlignToGravity(Axis3f* in, Axis3f* out);
 
-STATIC_MEM_TASK_ALLOC(sensorsTask, SENSORS_TASK_STACKSIZE);
-STATIC_MEM_TASK_ALLOC(poseTask, SENSORS_TASK_STACKSIZE);
+// STATIC_MEM_TASK_ALLOC(sensorsTask, SENSORS_TASK_STACKSIZE);
+// STATIC_MEM_TASK_ALLOC(poseTask, SENSORS_TASK_STACKSIZE);
 
 // static void sensorsDeviceInit(void);
 // static void sensorsTaskInit(void);
@@ -186,19 +188,22 @@ bool sensorsSimAreCalibrated() {
 }
 static void sensorsTask(void *param)
 {
+  systemWaitStart();
+
   measurement_t measurement;
   Axis3i16 accel_raw;
   Axis3i16 gyro_raw;
 
   DEBUG_PRINT("Entering sensorsTask() \n");
-  systemWaitStart();
+  
+
+  cfGzBridgeInit();
 
   while (1)
   {
-    if (pdTRUE == xSemaphoreTake(sensorsDataReady, portMAX_DELAY)) 
+    if (pdTRUE == acquireImuData(&accel_raw, &gyro_raw)) 
     {
       // DEBUG_PRINT("IMU data ready \n");
-      acquireImuData(&accel_raw, &gyro_raw);
       processAccGyroMeasurements(&accel_raw, &gyro_raw);
       measurement.type = MeasurementTypeAcceleration;
       measurement.data.acceleration.acc = sensors.acc;
@@ -208,29 +213,29 @@ static void sensorsTask(void *param)
       estimatorEnqueue(&measurement);
       xQueueOverwrite(accelerometerDataQueue, &sensors.acc);
       xQueueOverwrite(gyroDataQueue, &sensors.gyro);
+      // DEBUG_PRINT("Gave dataReady \n");
       xSemaphoreGive(dataReady);
-      // DEBUG_PRINT("Gave dataReady \n");
     }
   }
 }
 
-static void poseTask(void *param)
-{
-  poseMeasurement_t pose;
-  DEBUG_PRINT("Entering poseTask() \n");
-  systemWaitStart();
+// static void poseTask(void *param)
+// {
+//   systemWaitStart();
 
-  while (1)
-  {
-    if (pdTRUE == xSemaphoreTake(poseDataReady, portMAX_DELAY)) 
-    {
-      // DEBUG_PRINT("Pose data ready \n");
-      acquirePoseData(&pose);
-      estimatorEnqueuePose(&pose);
-      // DEBUG_PRINT("Gave dataReady \n");
-    }
-  }
-}
+//   poseMeasurement_t pose;
+//   DEBUG_PRINT("Entering poseTask() \n");
+  
+
+//   while (1)
+//   {
+//     if (pdTRUE == acquirePoseData(&pose)) 
+//     {
+//       // DEBUG_PRINT("Pose data ready \n");
+//       estimatorEnqueuePose(&pose);
+//     }
+//   }
+// }
 // static void sensorsTask(void *param)
 // {
 //   measurement_t measurement;
@@ -316,6 +321,7 @@ void processAccGyroMeasurements(const Axis3i16 *accData, const Axis3i16 *gyroDat
   gyroBiasFound = processGyroBiasNoBuffer(gyroData->x, gyroData->y, gyroData->z, &gyroBias);
 #else
   gyroBiasFound = processGyroBias(gyroData->x, gyroData->y, gyroData->z, &gyroBias);
+  // DEBUG_PRINT("Gyro Bias: %d\n", gyroBiasFound);
 #endif
   if (gyroBiasFound)
   {
@@ -362,8 +368,8 @@ static void sensorsTaskInit(void)
   magnetometerDataQueue = STATIC_MEM_QUEUE_CREATE(magnetometerDataQueue);
   barometerDataQueue = STATIC_MEM_QUEUE_CREATE(barometerDataQueue);
 
-  STATIC_MEM_TASK_CREATE(sensorsTask, sensorsTask, SENSORS_TASK_NAME, NULL, SENSORS_TASK_PRI);
-  STATIC_MEM_TASK_CREATE(poseTask, poseTask, "POSE", NULL, SENSORS_TASK_PRI);
+  xTaskCreate(sensorsTask, SENSORS_TASK_NAME, SENSORS_TASK_STACKSIZE, NULL, SENSORS_TASK_PRI, NULL);
+  // STATIC_MEM_TASK_CREATE(poseTask, poseTask, "POSE", NULL, SENSORS_TASK_PRI);
 }
 
 static void sensorsInterruptInit(void)
@@ -384,7 +390,7 @@ void sensorsSimInit(void)
   sensorsBiasObjInit(&gyroBiasRunning);
   sensorsDeviceInit();
   sensorsInterruptInit();
-  cfGzBridgeInit();
+  
   sensorsTaskInit();
 
   isInit = true;
@@ -676,11 +682,6 @@ static void applyAxis3fLpf(lpf2pData *data, Axis3f* in)
 void sensorsSimDataAvailableCallback(void)
 {
   xSemaphoreGive(sensorsDataReady);
-}
-
-void poseDataAvailableCallback(void)
-{
-  xSemaphoreGive(poseDataReady);
 }
 
 #ifdef GYRO_ADD_RAW_AND_VARIANCE_LOG_VALUES

@@ -71,7 +71,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DESTIMATOR=StateEstimatorType${ESTIMATOR} -
 
 #set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} --specs=nano.specs -T ${CF2_SITL_SRCS_DIR}/../tools/make/F405/linker/FLASH.ld")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-deprecated-declarations")
-# set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Debug)
 
 set(${PROJECT_NAME}_INCLUDE_DIRS
     ${PROJECT_SOURCE_DIR}/include
@@ -89,7 +89,7 @@ set(FREERTOS_SRCS
    ${FREERTOS_SRC_DIR}/portable/MemMang/heap_3.c
 )
 
-set (CF2_SITL_INCLUDE_DIRS
+set(CF2_SITL_INCLUDE_DIRS
   ${GZ-SIM_INCLUDE_DIRS}
   ${GZ-MSGS_INCLUDE_DIRS}
   ${GZ-TRANSPORT_INCLUDE_DIRS}
@@ -180,7 +180,7 @@ set(SRCS
   ${CF2_SITL_SRCS_DIR}/modules/src/estimator/estimator.c
   ${CF2_SITL_SRCS_DIR}/modules/src/estimator/estimator_complementary.c
   ${CF2_SITL_SRCS_DIR}/modules/src/estimator/estimator_kalman.c
-  ${CF2_SITL_SRCS_DIR}/modules/src/estimator/estimator_ukf.c
+  # ${CF2_SITL_SRCS_DIR}/modules/src/estimator/estimator_ukf.c
   ${CF2_SITL_SRCS_DIR}/modules/src/kalman_core/kalman_core.c
   ${CF2_SITL_SRCS_DIR}/modules/src/kalman_core/mm_absolute_height.c
   ${CF2_SITL_SRCS_DIR}/modules/src/kalman_core/mm_distance_robust.c
@@ -242,11 +242,11 @@ set(SRCS
 )
 
 # Create an executable
-add_executable(cf2 ${SRCS})
+add_executable(cf2 ${SRCS} ${CF2_SITL_INCLUDE_DIRS})
 
 target_link_libraries(cf2 ${CMAKE_THREAD_LIBS_INIT} m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${GZ_TRANSPORT_LIB})
 
-target_compile_options(cf2 PUBLIC -DCONFIG_DECK_FORCE -DCONFIG_ESTIMATOR_KALMAN -DCONFIG_ESTIMATOR_KALMAN_ENABLE -DCONFIG_ESTIMATOR_UKF_ENABLE -DCRAZYFLIE_FW -DCONFIG_PLATFORM_SITL -DARCH_64)
+target_compile_options(cf2 PUBLIC -DDEBUG -DCONFIG_DECK_FORCE -DCONFIG_ESTIMATOR_KALMAN -DCONFIG_ESTIMATOR_KALMAN_ENABLE -DCRAZYFLIE_FW -DCONFIG_PLATFORM_SITL -DARCH_64)
 target_compile_definitions(cf2 PUBLIC CONFIG_PLATFORM_SITL)
 set_target_properties(
   cf2 PROPERTIES LINK_FLAGS "-Wl,--gc-sections,-T${CMAKE_CURRENT_SOURCE_DIR}/log_param_linker.ld"

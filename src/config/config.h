@@ -58,7 +58,6 @@
 #define FREERTOS_MIN_STACK_SIZE 150       // M4-FPU register setup is bigger so stack needs to be bigger
 #define FREERTOS_MCU_CLOCK_HZ   168000000
 
-#define configGENERATE_RUN_TIME_STATS 1
 #define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() usecTimerInit()
 #define portGET_RUN_TIME_COUNTER_VALUE() usecTimestamp()
 #else
@@ -70,6 +69,10 @@
 #define FREERTOS_MCU_CLOCK_HZ     168000000
 
 #define configGENERATE_RUN_TIME_STATS 1
+#define configUSE_TRACE_FACILITY 1
+#define configUSE_STATS_FORMATTING_FUNCTIONS    1
+#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS()  ulPortGetRunTime()
+#define configRECORD_STACK_HIGH_ADDRESS         1
 #define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS()    /* no-op */
 #define portGET_RUN_TIME_COUNTER_VALUE()            ulPortGetRunTime()
 #endif

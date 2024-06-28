@@ -159,7 +159,7 @@ static const sensorsImplementation_t sensorImplementations[SensorImplementation_
     .readMag = sensorsSimReadMag,
     .readBaro = sensorsSimReadBaro,
     .setAccMode = sensorsSimSetAccMode,
-    .dataAvailableCallback = sensorsSimDataAvailableCallback,
+    .dataAvailableCallback = nullFunction,
   },
 #endif
 };

@@ -43,6 +43,5 @@ bool sensorsSimReadBaro(baro_t *baro);
 void sensorsSimSetAccMode(accModes accMode);
 void sensorsSimDataAvailableCallback(void);
 
-void poseDataAvailableCallback(void);
 
 #endif // __SENSORS_SIM_H__

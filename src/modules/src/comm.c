@@ -56,7 +56,7 @@ void commInit(void)
   uartslkInit();
   radiolinkInit();
   #else
-  socketlinkInit();
+  // socketlinkInit();
   #endif
 
   /* These functions are moved to be initialized early so
